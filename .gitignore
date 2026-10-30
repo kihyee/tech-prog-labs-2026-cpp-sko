@@ -1,0 +1,15 @@
+*.exe
+*.obj
+*.o
+*.pdb
+*.ilk
+
+Benchmark/
+X64/
+Debug/
+Release/
+.vs/
+out/
+build/
+.idea/
+cmake-build-*/
