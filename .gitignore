@@ -1,15 +1,14 @@
-*.exe
-*.obj
-*.o
-*.pdb
-*.ilk
-
-Benchmark/
-X64/
-Debug/
-Release/
-.vs/
-out/
+### сборка ###
 build/
-.idea/
+out/
 cmake-build-*/
+.cache/
+
+### IDE ###
+.idea/
+.vscode/
+.vs/
+
+### ОС ###
+.DS_Store
+Thumbs.db
