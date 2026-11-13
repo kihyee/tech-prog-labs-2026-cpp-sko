@@ -1,4 +1,5 @@
 #pragma once
+#include "core/unknown_code_error.hpp"
 
 #include <string>
 #include <vector>
@@ -22,9 +23,15 @@ namespace lab3 {
         inline const Enchantment STURDY{"sturdy", "Прочное", 0, 0.05, 20};
         inline const Enchantment WARDING{"warding", "Охранное", 0, 0.10, 50};
 
-        inline const std::vector<const Enchantment*> FOR_WEAPONS{&SHARP, &FIERY};
-        inline const std::vector<const Enchantment*> FOR_ARMOR{&STURDY, &WARDING};
+        inline const std::vector<const Enchantment *> FOR_WEAPONS{&SHARP, &FIERY};
+        inline const std::vector<const Enchantment *> FOR_ARMOR{&STURDY, &WARDING};
 
-    }  // namespace enchantments
+        inline const Enchantment &byCode(const std::string &code) {
+            for (auto e : {&SHARP, &FIERY, &STURDY, &WARDING})
+                if (e->code == code)
+                    return *e;
+            throw UnknownCodeError("Зачарование", code);
+        }
+    } // namespace enchantments
 
-}  // namespace lab3
+} // namespace lab3

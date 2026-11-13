@@ -11,7 +11,7 @@ namespace lab3 {
     class StarterKitFactory {
     public:
         virtual ~StarterKitFactory() = default;
-
+        //порождающие методы
         // возвращает некое оружие
         virtual std::unique_ptr<Weapon> createWeapon() const = 0;
 

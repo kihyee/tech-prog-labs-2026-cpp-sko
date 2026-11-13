@@ -12,12 +12,10 @@ namespace lab3 {
         Hit rollDamage() override;
 
     protected:
-        int reduceDamage(int damage) const override;
-
     private:
         static constexpr double RESISTANCE = 0.25;
         static constexpr double FIRE_BREATH_CHANCE = 0.25;
         static constexpr int FIRE_BREATH_MULTIPLIER = 2;
     };
 
-}  // namespace lab3
+} // namespace lab3

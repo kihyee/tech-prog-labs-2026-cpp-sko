@@ -1,4 +1,6 @@
 #pragma once
+#include "defense/damage_handler.hpp"
+#include "progress/achievement.hpp"
 
 #include <memory>
 #include <string>
@@ -15,57 +17,72 @@
 namespace lab3 {
 
 class Hero : public Combatant {
-public:
+  public:
     // внутренний класс билдер - чтобы удобно и безопасно создавать героев
     class Builder {
-    public:
-        Builder& setName(std::string name);
+      public:
+        Builder &setName(std::string name);
 
-        Builder& setHeroClass(const HeroClass& heroClass);
+        Builder &setHeroClass(const HeroClass &heroClass);
 
-        Builder& setWeapon(std::shared_ptr<Weapon> weapon);
+        Builder &setWeapon(std::shared_ptr<Weapon> weapon);
 
-        Builder& setArmor(std::shared_ptr<Armor> armor);
+        Builder &setArmor(std::shared_ptr<Armor> armor);
 
         // берет оружие и броню из стартового набора
-        Builder& setStarterKit(const StarterKitFactory& starterKit);
+        Builder &setStarterKit(const StarterKitFactory &starterKit);
 
-        Builder& setLevel(int level);
+        Builder &setLevel(int level);
 
-        Builder& setGold(int gold);
+        Builder &setGold(int gold);
+        Builder &setExperience(int value) {
+            experience_ = value;
+            return *this;
+        }
+        Builder &setInventory(std::vector<std::shared_ptr<Item>> items) {
+            inventory_ = std::move(items);
+            return *this;
+        }
+        Builder &setAchievements(std::vector<const Achievement *> items) {
+            achievements_ = std::move(items);
+            return *this;
+        }
 
         // перед созданием героя проверяем, что все обязательные поля заполнены корректно
         Hero build() const;
 
-    private:
+      private:
         // герою нужен доступ к полям строителя
         friend class Hero;
 
         std::string name_;
-        const HeroClass* heroClass_ = nullptr;
+        const HeroClass *heroClass_ = nullptr;
         std::shared_ptr<Weapon> weapon_;
         std::shared_ptr<Armor> armor_;
         // необязательные поля сразу получают значения по умолчанию
         int level_ = 1;
         int gold_ = STARTING_GOLD;
+        int experience_ = 0;
+        std::vector<std::shared_ptr<Item>> inventory_;
+        std::vector<const Achievement *> achievements_;
     };
 
     // героя можно перемещать, но не копировать: копия делила бы с оригиналом все его предметы
-    Hero(const Hero&) = delete;
-    Hero& operator=(const Hero&) = delete;
-    Hero(Hero&&) = default;
-    Hero& operator=(Hero&&) = default;
+    Hero(const Hero &) = delete;
+    Hero &operator=(const Hero &) = delete;
+    Hero(Hero &&) = default;
+    Hero &operator=(Hero &&) = default;
 
     Hit rollDamage() override;
 
-    int receiveHit(int damage) override;
+    Damage receiveHit(int damage) override;
 
     bool isAlive() const override;
 
     // поведение героя между экспедициями
 
     // перед каждой экспедицией герой успевает отдохнуть
-    void restoreHealth();
+    void rest();
 
     // начисляет опыт, возвращает количество полученных уровней
     int gainExperience(int amount);
@@ -76,22 +93,22 @@ public:
 
     void addItem(std::shared_ptr<Item> item);
 
-    void removeItem(const std::shared_ptr<Item>& item);
+    void removeItem(const std::shared_ptr<Item> &item);
 
     // экипирует предмет из инвентаря, снятый предмет возвращается в инвентарь
-    void equip(const std::shared_ptr<Item>& item);
+    void equip(const std::shared_ptr<Item> &item);
 
     // геттеры
 
-    const std::string& getCode() const override;
+    const std::string &getCode() const override;
 
-    const std::string& getName() const override;
+    const std::string &getName() const override;
 
     int getHealth() const override;
 
     int getMaxHealth() const override;
 
-    const HeroClass& getHeroClass() const;
+    const HeroClass &getHeroClass() const;
 
     int getLevel() const;
 
@@ -101,13 +118,17 @@ public:
 
     int getGold() const;
 
-    const Weapon& getWeapon() const;
+    const Weapon &getWeapon() const;
 
-    const Armor& getArmor() const;
+    const Armor &getArmor() const;
 
-    const std::vector<std::shared_ptr<Item>>& getInventory() const;
+    const std::vector<std::shared_ptr<Item>> &getInventory() const;
+    const std::vector<const Achievement *> &getAchievements() const {
+        return achievements_;
+    }
+    bool unlock(const Achievement &achievement);
 
-private:
+  private:
     static constexpr int MAX_NAME_LENGTH = 20;
     static constexpr int STARTING_GOLD = 50;
     static constexpr int HEALTH_PER_LEVEL = 15;
@@ -115,10 +136,10 @@ private:
     static constexpr int EXPERIENCE_PER_LEVEL = 100;
 
     // конструктор приватный и принимает в себя билдера, из которого и берет значения полей
-    explicit Hero(const Builder& builder);
+    explicit Hero(const Builder &builder);
 
     std::string name_;
-    const HeroClass* heroClass_;
+    const HeroClass *heroClass_;
     int level_;
     int experience_ = 0;
     int gold_;
@@ -128,6 +149,8 @@ private:
     std::shared_ptr<Weapon> weapon_;
     std::shared_ptr<Armor> armor_;
     std::vector<std::shared_ptr<Item>> inventory_;
+    std::vector<const Achievement *> achievements_;
+    std::unique_ptr<DamageHandler> defense_;
 };
 
-}  // namespace lab3
+} // namespace lab3

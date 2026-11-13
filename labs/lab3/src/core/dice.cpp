@@ -1,8 +1,10 @@
 #include "core/dice.hpp"
 
+#include <stdexcept>
+
 namespace lab3 {
 
-    Dice& Dice::getInstance() {
+    Dice &Dice::getInstance() {
         // единственный экземпляр - статическая переменная функции:
         // она создается при первом вызове метода и живет до конца программы
         static Dice instance;
@@ -20,13 +22,21 @@ namespace lab3 {
     }
 
     int Dice::roll(int min, int max) {
-        std::uniform_int_distribution<int> distribution(min, max);
-        return distribution(random_);
+        if (min > max) {
+            throw std::invalid_argument("min must not exceed max");
+        }
+        const auto range = static_cast<std::uint64_t>(static_cast<std::int64_t>(max) - min) + 1;
+        const std::uint64_t values = std::uint64_t{1} << 32;
+        const auto limit = values - values % range;
+        std::uint64_t value;
+        do {
+            value = random_();
+        } while (value >= limit);
+        return static_cast<int>(static_cast<std::int64_t>(min) + static_cast<std::int64_t>(value % range));
     }
 
     bool Dice::chance(double probability) {
-        std::uniform_real_distribution<double> distribution(0.0, 1.0);
-        return distribution(random_) < probability;
+        return static_cast<double>(random_()) / 4294967296.0 < probability;
     }
 
-}  // namespace lab3
+} // namespace lab3

@@ -1,3 +1,4 @@
+#include "defense/armor_handler.hpp"
 #include "enemy/dragon.hpp"
 
 #include <cmath>
@@ -6,7 +7,8 @@
 
 namespace lab3 {
 
-    Dragon::Dragon() : AbstractEnemy("dragon", "Дракон", 260, 16, 22, 500, 400) {}
+    Dragon::Dragon()
+        : AbstractEnemy("dragon", "Дракон", 260, 16, 22, 500, 400, std::make_unique<ArmorHandler>(RESISTANCE)) {}
 
     Hit Dragon::rollDamage() {
         Hit bite = AbstractEnemy::rollDamage();
@@ -17,8 +19,4 @@ namespace lab3 {
         return bite;
     }
 
-    int Dragon::reduceDamage(int damage) const {
-        return static_cast<int>(std::lround(damage * (1 - RESISTANCE)));
-    }
-
-}  // namespace lab3
+} // namespace lab3

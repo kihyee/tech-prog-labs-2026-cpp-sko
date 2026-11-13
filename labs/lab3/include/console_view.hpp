@@ -18,18 +18,21 @@ namespace lab3 {
     public:
         static void setupConsole();
 
-        std::string describe(const Item& item) const;
+        std::string describe(const Item &item) const;
 
-        void printHero(const Hero& hero) const;
+        void printHero(const Hero &hero) const;
 
-        void printReport(const ExpeditionReport& report, const std::string& locationName) const;
+        std::string summarize(const ExpeditionReport &report, const std::string &locationName,
+                              const std::string &tacticName) const;
+
+        void printReport(const ExpeditionReport &report, const std::string &locationName) const;
 
     private:
-        void printEvent(const BattleEvent& event, const BattleReport& battle) const;
+        void printEvent(const BattleEvent &event, const BattleReport &battle) const;
 
-        void printRewards(const BattleReport& battle, const Rewards& rewards) const;
+        void printRewards(const BattleReport &battle, const Rewards &rewards) const;
 
-        const Participant& participant(Side side, const BattleReport& battle) const;
+        const Participant &participant(Side side, const BattleReport &battle) const;
     };
 
-}  // namespace lab3
+} // namespace lab3

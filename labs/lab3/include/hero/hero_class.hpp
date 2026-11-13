@@ -1,4 +1,6 @@
 #pragma once
+#include "defense/damage_handler.hpp"
+#include "item/armor.hpp"
 
 #include <memory>
 #include <string>
@@ -18,22 +20,23 @@ namespace lab3 {
         static const HeroClass MAGE;
 
         // все классы героя по порядку
-        static const std::vector<const HeroClass*>& values();
+        static const std::vector<const HeroClass *> &values();
 
-        static const HeroClass& byCode(const std::string& code);
+        static const HeroClass &byCode(const std::string &code);
 
         // каждый класс сам знает свою фабрику стартового снаряжения
-        std::unique_ptr<StarterKitFactory> getStarterKit(const ItemCatalog& catalog) const;
+        std::unique_ptr<StarterKitFactory> getStarterKit(const ItemCatalog &catalog) const;
 
-        const std::string& getCode() const;
+        const std::string &getCode() const;
 
-        const std::string& getDisplayName() const;
+        const std::string &getDisplayName() const;
 
         int getBaseHealth() const;
+        std::unique_ptr<DamageHandler> createDefense(const Armor &armor, int level) const;
 
     private:
         // указатель на функцию, которая создает фабрику стартового снаряжения
-        using StarterKitCreator = std::unique_ptr<StarterKitFactory> (*)(const ItemCatalog&);
+        using StarterKitCreator = std::unique_ptr<StarterKitFactory> (*)(const ItemCatalog &);
 
         HeroClass(std::string code, std::string displayName, int baseHealth, StarterKitCreator starterKit);
 
@@ -43,4 +46,4 @@ namespace lab3 {
         StarterKitCreator starterKit_;
     };
 
-}  // namespace lab3
+} // namespace lab3

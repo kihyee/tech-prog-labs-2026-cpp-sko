@@ -19,10 +19,10 @@ void ConsoleView::setupConsole() {
 #endif
 }
 
-std::string ConsoleView::describe(const Item& item) const {
+std::string ConsoleView::describe(const Item &item) const {
     std::string description = item.getName();
 
-    const auto& enchantments = item.getEnchantments();
+    const auto &enchantments = item.getEnchantments();
     if (!enchantments.empty()) {
         description += " [";
         for (std::size_t i = 0; i < enchantments.size(); i++) {
@@ -37,53 +37,77 @@ std::string ConsoleView::describe(const Item& item) const {
     return description + " (" + item.getDescription() + ")";
 }
 
-void ConsoleView::printHero(const Hero& hero) const {
+void ConsoleView::printHero(const Hero &hero) const {
     std::cout << hero.getName() << ", " << hero.getHeroClass().getDisplayName() << " " << hero.getLevel()
-              << " ур. | здоровье " << hero.getMaxHealth()
-              << " | опыт " << hero.getExperience() << "/" << hero.getExperienceToNextLevel()
-              << " | золото " << hero.getGold() << "\n";
+              << " ур. | здоровье " << hero.getMaxHealth() << " | опыт " << hero.getExperience() << "/"
+              << hero.getExperienceToNextLevel() << " | золото " << hero.getGold() << "\n";
     std::cout << "  Оружие: " << describe(hero.getWeapon()) << "\n";
     std::cout << "  Броня:  " << describe(hero.getArmor()) << "\n";
+    if (!hero.getAchievements().empty()) {
+        std::cout << "  Достижения: ";
+        bool first = true;
+        for (auto a : hero.getAchievements()) {
+            if (!first)
+                std::cout << ", ";
+            std::cout << a->displayName;
+            first = false;
+        }
+        std::cout << "\n";
+    }
 }
 
-void ConsoleView::printReport(const ExpeditionReport& report, const std::string& locationName) const {
-    const BattleReport& battle = report.battle;
+void ConsoleView::printReport(const ExpeditionReport &report, const std::string &locationName) const {
+    const BattleReport &battle = report.battle;
     std::cout << "=== " << locationName << " (сид " << report.seed << ") ===\n";
-    std::cout << battle.hero.name << " встречает врага: " << battle.enemy.name
-              << " (" << battle.enemy.maxHealth << " здоровья)\n";
+    std::cout << battle.hero.name << " встречает врага: " << battle.enemy.name << " ("
+              << battle.enemy.maxHealth << " здоровья)\n";
 
-    for (const BattleEvent& event : battle.events) {
+    for (const BattleEvent &event : battle.events) {
         printEvent(event, battle);
     }
 
     printRewards(battle, report.rewards);
 }
 
-void ConsoleView::printEvent(const BattleEvent& event, const BattleReport& battle) const {
-    const Participant& source = participant(event.source, battle);
-    const Participant& target = participant(event.target, battle);
+void ConsoleView::printEvent(const BattleEvent &event, const BattleReport &battle) const {
+    const Participant &source = participant(event.source, battle);
+    const Participant &target = participant(event.target, battle);
 
     switch (event.type) {
-        case EventType::HIT:
-            std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name << ": "
-                      << event.amount << " урона, осталось "
-                      << event.targetHealthAfter << "/" << target.maxHealth << "\n";
-            break;
-        case EventType::CRITICAL_HIT:
-            std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name << ": КРИТ! "
-                      << event.amount << " урона, осталось "
-                      << event.targetHealthAfter << "/" << target.maxHealth << "\n";
-            break;
-        case EventType::DEATH:
-            std::cout << target.name << " повержен!\n";
-            break;
+    case EventType::HIT:
+        std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name << ": "
+                  << event.amount << " урона, осталось " << event.targetHealthAfter << "/" << target.maxHealth
+                  << "\n";
+        break;
+    case EventType::CRITICAL_HIT:
+        std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name << ": КРИТ! "
+                  << event.amount << " урона, осталось " << event.targetHealthAfter << "/" << target.maxHealth
+                  << "\n";
+        break;
+    case EventType::EVADE:
+        std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name << ": промах, "
+                  << target.name << " уклоняется\n";
+        break;
+    case EventType::ABSORB:
+        std::cout << "[раунд " << event.round << "] " << source.name << " -> " << target.name
+                  << ": барьер поглощает " << event.amount << " урона\n";
+        break;
+    case EventType::POWER_STRIKE:
+        std::cout << "[раунд " << event.round << "] " << source.name << " бьет в полную силу\n";
+        break;
+    case EventType::DEFEND:
+        std::cout << "[раунд " << event.round << "] " << source.name << " уходит в оборону\n";
+        break;
+    case EventType::DEATH:
+        std::cout << target.name << " повержен!\n";
+        break;
     }
 }
 
-void ConsoleView::printRewards(const BattleReport& battle, const Rewards& rewards) const {
+void ConsoleView::printRewards(const BattleReport &battle, const Rewards &rewards) const {
     if (battle.outcome == Outcome::DEFEAT) {
-        std::cout << "Поражение... " << battle.hero.name << " едва уносит ноги и теряет "
-                  << -rewards.gold << " золота\n";
+        std::cout << "Поражение... " << battle.hero.name << " едва уносит ноги и теряет " << -rewards.gold
+                  << " золота\n";
         return;
     }
 
@@ -96,8 +120,13 @@ void ConsoleView::printRewards(const BattleReport& battle, const Rewards& reward
     }
 }
 
-const Participant& ConsoleView::participant(Side side, const BattleReport& battle) const {
+const Participant &ConsoleView::participant(Side side, const BattleReport &battle) const {
     return side == Side::HERO ? battle.hero : battle.enemy;
 }
 
-}  // namespace lab3
+std::string ConsoleView::summarize(const ExpeditionReport &report, const std::string &locationName,
+                                   const std::string &tacticName) const {
+    return locationName + ", " + report.battle.enemy.name + ", тактика \"" + tacticName +
+           "\": " + (report.battle.outcome == Outcome::VICTORY ? "победа" : "поражение");
+}
+} // namespace lab3

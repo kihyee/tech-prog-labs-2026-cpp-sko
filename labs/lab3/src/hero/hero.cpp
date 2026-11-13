@@ -9,7 +9,7 @@ namespace lab3 {
 
 namespace {
 
-int utf8Length(const std::string& text) {
+int utf8Length(const std::string &text) {
     int length = 0;
     for (unsigned char byte : text) {
         if ((byte & 0xC0) != 0x80) {
@@ -20,46 +20,46 @@ int utf8Length(const std::string& text) {
     return length;
 }
 
-bool isBlank(const std::string& text) {
+bool isBlank(const std::string &text) {
     return text.find_first_not_of(" \t\r\n") == std::string::npos;
 }
 
-}  // namespace
+} // namespace
 
 // строитель
 
-Hero::Builder& Hero::Builder::setName(std::string name) {
+Hero::Builder &Hero::Builder::setName(std::string name) {
     name_ = std::move(name);
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setHeroClass(const HeroClass& heroClass) {
+Hero::Builder &Hero::Builder::setHeroClass(const HeroClass &heroClass) {
     heroClass_ = &heroClass;
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setWeapon(std::shared_ptr<Weapon> weapon) {
+Hero::Builder &Hero::Builder::setWeapon(std::shared_ptr<Weapon> weapon) {
     weapon_ = std::move(weapon);
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setArmor(std::shared_ptr<Armor> armor) {
+Hero::Builder &Hero::Builder::setArmor(std::shared_ptr<Armor> armor) {
     armor_ = std::move(armor);
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setStarterKit(const StarterKitFactory& starterKit) {
+Hero::Builder &Hero::Builder::setStarterKit(const StarterKitFactory &starterKit) {
     weapon_ = starterKit.createWeapon();
     armor_ = starterKit.createArmor();
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setLevel(int level) {
+Hero::Builder &Hero::Builder::setLevel(int level) {
     level_ = level;
     return *this;
 }
 
-Hero::Builder& Hero::Builder::setGold(int gold) {
+Hero::Builder &Hero::Builder::setGold(int gold) {
     gold_ = gold;
     return *this;
 }
@@ -69,9 +69,8 @@ Hero Hero::Builder::build() const {
         throw std::invalid_argument("У героя должно быть имя");
     }
     if (utf8Length(name_) > MAX_NAME_LENGTH) {
-        throw std::invalid_argument(
-            "Имя героя не может быть длиннее " + std::to_string(MAX_NAME_LENGTH) + " символов"
-        );
+        throw std::invalid_argument("Имя героя не может быть длиннее " + std::to_string(MAX_NAME_LENGTH) +
+                                    " символов");
     }
     if (heroClass_ == nullptr) {
         throw std::invalid_argument("Не выбран класс героя");
@@ -86,20 +85,20 @@ Hero Hero::Builder::build() const {
         throw std::invalid_argument("Золота не может быть меньше нуля");
     }
 
+    if (experience_ < 0)
+        throw std::invalid_argument("Опыт не может быть отрицательным");
     return Hero(*this);
 }
 
 // герой
 
-Hero::Hero(const Builder& builder)
-    : name_(builder.name_),
-      heroClass_(builder.heroClass_),
-      level_(builder.level_),
-      gold_(builder.gold_),
-      health_(0),
-      weapon_(builder.weapon_),
-      armor_(builder.armor_) {
-    health_ = getMaxHealth();
+Hero::Hero(const Builder &builder)
+    : name_(builder.name_), heroClass_(builder.heroClass_), level_(builder.level_),
+      experience_(builder.experience_), gold_(builder.gold_), health_(0), weapon_(builder.weapon_),
+      armor_(builder.armor_), inventory_(builder.inventory_) {
+    for (auto a : builder.achievements_)
+        unlock(*a);
+    rest();
 }
 
 Hit Hero::rollDamage() {
@@ -107,20 +106,20 @@ Hit Hero::rollDamage() {
     return {hit.damage + (level_ - 1) * DAMAGE_PER_LEVEL, hit.critical};
 }
 
-int Hero::receiveHit(int damage) {
-    int reducedDamage = static_cast<int>(std::lround(damage * (1 - armor_->getDefense())));
-    // хотя бы единицу урона броня пропускает всегда
-    int dealt = std::max(1, reducedDamage);
-    health_ = std::max(0, health_ - dealt);
-    return dealt;
+Damage Hero::receiveHit(int amount) {
+    Damage damage(amount);
+    defense_->handle(damage);
+    health_ = std::max(0, health_ - damage.getAmount());
+    return damage;
 }
 
 bool Hero::isAlive() const {
     return health_ > 0;
 }
 
-void Hero::restoreHealth() {
+void Hero::rest() {
     health_ = getMaxHealth();
+    defense_ = heroClass_->createDefense(*armor_, level_);
 }
 
 int Hero::gainExperience(int amount) {
@@ -141,9 +140,8 @@ void Hero::addGold(int amount) {
 
 void Hero::spendGold(int amount) {
     if (amount > gold_) {
-        throw std::runtime_error(
-            "Не хватает золота: нужно " + std::to_string(amount) + ", есть " + std::to_string(gold_)
-        );
+        throw std::runtime_error("Не хватает золота: нужно " + std::to_string(amount) + ", есть " +
+                                 std::to_string(gold_));
     }
 
     gold_ -= amount;
@@ -153,7 +151,7 @@ void Hero::addItem(std::shared_ptr<Item> item) {
     inventory_.push_back(std::move(item));
 }
 
-void Hero::removeItem(const std::shared_ptr<Item>& item) {
+void Hero::removeItem(const std::shared_ptr<Item> &item) {
     auto position = std::find(inventory_.begin(), inventory_.end(), item);
     if (position == inventory_.end()) {
         throw std::invalid_argument("В инвентаре нет предмета " + item->getName());
@@ -162,7 +160,7 @@ void Hero::removeItem(const std::shared_ptr<Item>& item) {
     inventory_.erase(position);
 }
 
-void Hero::equip(const std::shared_ptr<Item>& item) {
+void Hero::equip(const std::shared_ptr<Item> &item) {
     // dynamic_pointer_cast вернет пустой указатель, если предмет другого типа
     if (auto newWeapon = std::dynamic_pointer_cast<Weapon>(item)) {
         removeItem(item);
@@ -172,16 +170,17 @@ void Hero::equip(const std::shared_ptr<Item>& item) {
         removeItem(item);
         inventory_.push_back(armor_);
         armor_ = newArmor;
+        defense_ = heroClass_->createDefense(*armor_, level_);
     } else {
         throw std::invalid_argument("Предмет нельзя экипировать: " + item->getName());
     }
 }
 
-const std::string& Hero::getCode() const {
+const std::string &Hero::getCode() const {
     return heroClass_->getCode();
 }
 
-const std::string& Hero::getName() const {
+const std::string &Hero::getName() const {
     return name_;
 }
 
@@ -193,7 +192,7 @@ int Hero::getMaxHealth() const {
     return heroClass_->getBaseHealth() + (level_ - 1) * HEALTH_PER_LEVEL;
 }
 
-const HeroClass& Hero::getHeroClass() const {
+const HeroClass &Hero::getHeroClass() const {
     return *heroClass_;
 }
 
@@ -213,16 +212,22 @@ int Hero::getGold() const {
     return gold_;
 }
 
-const Weapon& Hero::getWeapon() const {
+const Weapon &Hero::getWeapon() const {
     return *weapon_;
 }
 
-const Armor& Hero::getArmor() const {
+const Armor &Hero::getArmor() const {
     return *armor_;
 }
 
-const std::vector<std::shared_ptr<Item>>& Hero::getInventory() const {
+const std::vector<std::shared_ptr<Item>> &Hero::getInventory() const {
     return inventory_;
 }
 
-}  // namespace lab3
+bool Hero::unlock(const Achievement &a) {
+    if (std::find(achievements_.begin(), achievements_.end(), &a) != achievements_.end())
+        return false;
+    achievements_.push_back(&a);
+    return true;
+}
+} // namespace lab3

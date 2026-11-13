@@ -12,8 +12,9 @@ namespace lab3 {
     struct ExpeditionReport {
         std::uint32_t seed;
         std::string locationCode;
+        std::string tacticCode;
         BattleReport battle;
         Rewards rewards;
     };
 
-}  // namespace lab3
+} // namespace lab3

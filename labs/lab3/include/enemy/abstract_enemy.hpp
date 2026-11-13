@@ -1,4 +1,5 @@
 #pragma once
+#include "defense/damage_handler.hpp"
 
 #include <string>
 
@@ -12,7 +13,7 @@ namespace lab3 {
     public:
         Hit rollDamage() override;
 
-        int receiveHit(int damage) override;
+        Damage receiveHit(int damage) override;
 
         bool isAlive() const override;
 
@@ -20,23 +21,17 @@ namespace lab3 {
 
         int getExperienceReward() const override;
 
-        const std::string& getCode() const override;
+        const std::string &getCode() const override;
 
-        const std::string& getName() const override;
+        const std::string &getName() const override;
 
         int getHealth() const override;
 
         int getMaxHealth() const override;
 
     protected:
-        AbstractEnemy(
-            std::string code, std::string name, int maxHealth,
-            int minDamage, int maxDamage,
-            int experienceReward, int goldReward
-        );
-
-        // наследники могут уменьшать входящий урон
-        virtual int reduceDamage(int damage) const;
+        AbstractEnemy(std::string code, std::string name, int maxHealth, int minDamage, int maxDamage,
+                      int experienceReward, int goldReward, std::unique_ptr<DamageHandler> defense = nullptr);
 
     private:
         std::string code_;
@@ -47,6 +42,7 @@ namespace lab3 {
         int experienceReward_;
         int goldReward_;
         int health_;
+        std::unique_ptr<DamageHandler> defense_;
     };
 
-}  // namespace lab3
+} // namespace lab3
